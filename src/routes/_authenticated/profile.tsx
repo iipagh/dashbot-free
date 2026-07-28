@@ -8,10 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getMyProfile, updateProfile } from "@/lib/app.functions";
-import { Loader2, Crown, MessageSquare, Sparkles } from "lucide-react";
+import { Loader2, Crown, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
-import { PaywallDialog } from "@/components/paywall-dialog";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({ meta: [{ title: "Profile — DashBot AI" }] }),
@@ -27,7 +26,6 @@ function ProfilePage() {
   const [name, setName] = useState("");
   const [avatar, setAvatar] = useState("");
   const [saving, setSaving] = useState(false);
-  const [showPaywall, setShowPaywall] = useState(false);
 
   useEffect(() => {
     if (q.data?.profile) {
@@ -99,11 +97,6 @@ function ProfilePage() {
                     Renews {new Date(q.data.subscription.current_period_end).toLocaleDateString()}
                   </p>
                 )}
-                {!isPro && (
-                  <Button className="mt-4 w-full bg-white text-primary hover:bg-white/90" onClick={() => setShowPaywall(true)}>
-                    <Sparkles className="mr-2 h-4 w-4" /> Upgrade to Pro
-                  </Button>
-                )}
               </div>
 
               <div className="glass rounded-2xl p-6">
@@ -121,7 +114,6 @@ function ProfilePage() {
           </div>
         )}
       </div>
-      <PaywallDialog open={showPaywall} onOpenChange={setShowPaywall} />
     </AppShell>
   );
 }

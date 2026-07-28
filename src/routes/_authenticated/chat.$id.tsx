@@ -90,8 +90,13 @@ function ChatPage() {
           messages: newMsgs.map(({ role, content }) => ({ role, content })),
         }),
       });
-      if (res.status === 402 || res.status === 429) {
+      if (res.status === 402) {
         toast.error("You've hit your limit. Please upgrade to Pro.");
+        setStreaming(false);
+        return;
+      }
+      if (res.status === 429) {
+        toast.error("The AI service is busy right now. Please try again in a moment.");
         setStreaming(false);
         return;
       }

@@ -3,8 +3,8 @@ import { requireAuthFromRequest } from "@/lib/api-auth.server";
 
 const sizeMap: Record<string, string> = {
   square: "1024x1024",
-  portrait: "1024x1792",
-  landscape: "1792x1024",
+  portrait: "1024x1536",
+  landscape: "1536x1024",
 };
 
 const styleSuffix: Record<string, string> = {

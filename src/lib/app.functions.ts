@@ -162,6 +162,18 @@ export const saveImage = createServerFn({ method: "POST" })
     return row;
   });
 
+export const listVideos = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("generated_videos")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(60);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
 // Config
 export const getPublicConfig = createServerFn({ method: "GET" }).handler(async () => {
   return {

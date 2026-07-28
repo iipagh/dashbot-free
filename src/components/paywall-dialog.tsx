@@ -57,13 +57,16 @@ export function PaywallDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     if (!pkg) return;
     setBusy(packageId);
     try {
-      const result = await Purchases.getSharedInstance().purchase({ rcPackage: pkg as any });
-      const entitlement = Object.values(result.customerInfo.entitlements.active)[0];
+      const result = await Purchases.getSharedInstance().purchase({ rcPackage: pkg as never });
+      const entitlement = Object.values(result.customerInfo.entitlements.active)[0] as
+        | { expiresDate?: string | Date | null }
+        | undefined;
       const isPro = Boolean(entitlement);
+      const expires = entitlement?.expiresDate;
       await syncFn({
         data: {
           isPro,
-          expiresAt: entitlement?.expirationDate ?? null,
+          expiresAt: expires ? new Date(expires).toISOString() : null,
           customerId: result.customerInfo.originalAppUserId,
         },
       });

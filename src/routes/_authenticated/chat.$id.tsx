@@ -91,7 +91,7 @@ function ChatPage() {
         }),
       });
       if (res.status === 402) {
-        toast.error("You've hit your limit. Please upgrade to Pro.");
+        toast.error("The AI service needs attention. Please try again later.");
         setStreaming(false);
         return;
       }

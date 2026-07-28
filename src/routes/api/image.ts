@@ -38,11 +38,10 @@ export const Route = createFileRoute("/api/image")({
           method: "POST",
           headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "dall-e-3",
+            model: "gpt-image-1",
             prompt: enhanced,
             size: resolvedSize,
             n: 1,
-            response_format: "url",
           }),
         });
 
@@ -50,8 +49,10 @@ export const Route = createFileRoute("/api/image")({
           const text = await upstream.text();
           return new Response(text, { status: upstream.status });
         }
-        const json = (await upstream.json()) as { data: { url: string }[] };
-        return Response.json({ url: json.data[0]?.url });
+        const json = (await upstream.json()) as { data: { url?: string; b64_json?: string }[] };
+        const item = json.data[0];
+        const url = item?.url ?? (item?.b64_json ? `data:image/png;base64,${item.b64_json}` : null);
+        return Response.json({ url });
       },
     },
   },

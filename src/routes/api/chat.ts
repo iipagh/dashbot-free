@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAuthFromRequest } from "@/lib/api-auth.server";
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
 export const Route = createFileRoute("/api/chat")({
   server: {
-    middleware: [requireSupabaseAuth],
     handlers: {
       POST: async ({ request }) => {
+        const authResult = await requireAuthFromRequest(request);
+        if (authResult instanceof Response) return authResult;
+
         const key = process.env.OPENAI_API_KEY;
         if (!key) return new Response("Missing OPENAI_API_KEY", { status: 500 });
 
@@ -17,15 +19,12 @@ export const Route = createFileRoute("/api/chat")({
         const system: ChatMessage = {
           role: "system",
           content:
-            "You are DashBot, a helpful, friendly, and creative AI assistant. Respond in clean markdown. Use code blocks with language tags for code, tables when useful, and be concise but thorough.",
+            "You are DashBot, a helpful, friendly, and creative AI assistant. Respond in clean markdown. Use fenced code blocks with language tags, tables when useful, and be concise but thorough.",
         };
 
         const upstream = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${key}`,
-            "Content-Type": "application/json",
-          },
+          headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "gpt-4o-mini",
             stream: true,
@@ -38,7 +37,6 @@ export const Route = createFileRoute("/api/chat")({
           return new Response(text, { status: upstream.status });
         }
 
-        // Transform OpenAI SSE -> plain text stream of deltas.
         const stream = new ReadableStream({
           async start(controller) {
             const reader = upstream.body!.getReader();
@@ -55,17 +53,12 @@ export const Route = createFileRoute("/api/chat")({
                   const trimmed = line.trim();
                   if (!trimmed.startsWith("data:")) continue;
                   const payload = trimmed.slice(5).trim();
-                  if (payload === "[DONE]") {
-                    controller.close();
-                    return;
-                  }
+                  if (payload === "[DONE]") { controller.close(); return; }
                   try {
                     const json = JSON.parse(payload);
                     const delta = json.choices?.[0]?.delta?.content;
                     if (delta) controller.enqueue(new TextEncoder().encode(delta));
-                  } catch {
-                    /* ignore parse errors */
-                  }
+                  } catch { /* ignore */ }
                 }
               }
               controller.close();

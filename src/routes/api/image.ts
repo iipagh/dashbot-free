@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAuthFromRequest } from "@/lib/api-auth.server";
 
 const sizeMap: Record<string, string> = {
   square: "1024x1024",
@@ -18,16 +18,16 @@ const styleSuffix: Record<string, string> = {
 
 export const Route = createFileRoute("/api/image")({
   server: {
-    middleware: [requireSupabaseAuth],
     handlers: {
       POST: async ({ request }) => {
+        const authResult = await requireAuthFromRequest(request);
+        if (authResult instanceof Response) return authResult;
+
         const key = process.env.OPENAI_API_KEY;
         if (!key) return new Response("Missing OPENAI_API_KEY", { status: 500 });
 
         const { prompt, style, size } = (await request.json()) as {
-          prompt: string;
-          style: string;
-          size: string;
+          prompt: string; style: string; size: string;
         };
         if (!prompt) return new Response("prompt required", { status: 400 });
 

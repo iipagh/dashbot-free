@@ -199,17 +199,59 @@ function ChatPage() {
                   c.id === conversationId ? "bg-accent" : "hover:bg-accent/60"
                 }`}
               >
-                <Link to="/chat/$id" params={{ id: c.id }} className="flex-1 truncate">
-                  <MessageSquare className="mr-2 inline h-3.5 w-3.5 text-muted-foreground" />
-                  {c.title}
-                </Link>
-                <button
-                  className="opacity-0 transition group-hover:opacity-100"
-                  onClick={() => delChat(c.id)}
-                  aria-label="Delete chat"
-                >
-                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
-                </button>
+                {renamingId === c.id ? (
+                  <>
+                    <Input
+                      autoFocus
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") { e.preventDefault(); commitRename(c.id); }
+                        if (e.key === "Escape") { e.preventDefault(); setRenamingId(null); }
+                      }}
+                      onBlur={() => commitRename(c.id)}
+                      className="h-7 flex-1 px-2 text-sm"
+                      maxLength={80}
+                    />
+                    <button
+                      className="text-muted-foreground hover:text-primary"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => commitRename(c.id)}
+                      aria-label="Save name"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      className="text-muted-foreground hover:text-destructive"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => setRenamingId(null)}
+                      aria-label="Cancel rename"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/chat/$id" params={{ id: c.id }} className="flex-1 truncate">
+                      <MessageSquare className="mr-2 inline h-3.5 w-3.5 text-muted-foreground" />
+                      {c.title}
+                    </Link>
+                    <button
+                      className="opacity-0 transition group-hover:opacity-100"
+                      onClick={() => { setRenamingId(c.id); setRenameValue(c.title); }}
+                      aria-label="Rename chat"
+                    >
+                      <Pencil className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+                    </button>
+                    <button
+                      className="opacity-0 transition group-hover:opacity-100"
+                      onClick={() => delChat(c.id)}
+                      aria-label="Delete chat"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                    </button>
+                  </>
+                )}
               </div>
             ))}
           </div>

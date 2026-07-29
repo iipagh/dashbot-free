@@ -10,8 +10,8 @@ export const Route = createFileRoute("/api/chat")({
         const authResult = await requireAuthFromRequest(request);
         if (authResult instanceof Response) return authResult;
 
-        const key = process.env.OPENAI_API_KEY;
-        if (!key) return new Response("Missing OPENAI_API_KEY", { status: 500 });
+        const key = process.env.LOVABLE_API_KEY;
+        if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
 
         const { messages } = (await request.json()) as { messages: ChatMessage[] };
         if (!Array.isArray(messages)) return new Response("messages required", { status: 400 });
@@ -22,11 +22,11 @@ export const Route = createFileRoute("/api/chat")({
             "You are DashBot, a helpful, friendly, and creative AI assistant. Respond in clean markdown. Use fenced code blocks with language tags, tables when useful, and be concise but thorough.",
         };
 
-        const upstream = await fetch("https://api.openai.com/v1/chat/completions", {
+        const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
-          headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+          headers: { "Lovable-API-Key": key, "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "gpt-4o-mini",
+            model: "google/gemini-3.6-flash",
             stream: true,
             messages: [system, ...messages],
           }),

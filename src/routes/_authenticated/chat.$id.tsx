@@ -18,7 +18,7 @@ import {
 } from "@/lib/app.functions";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Copy, RefreshCw, Send, Plus, Search, Trash2, Loader2, MessageSquare, Sparkles,
+  Copy, RefreshCw, Send, Plus, Search, Trash2, Loader2, MessageSquare, Sparkles, Pencil, Check, X,
 } from "lucide-react";
 import { toast } from "sonner";
 

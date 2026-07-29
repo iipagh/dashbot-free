@@ -170,6 +170,14 @@ function ChatPage() {
     }
   }
 
+  async function commitRename(id: string) {
+    const title = renameValue.trim();
+    setRenamingId(null);
+    if (!title) return;
+    await renameFn({ data: { id, title } });
+    qc.invalidateQueries({ queryKey: ["conversations"] });
+  }
+
   return (
     <AppShell>
       <div className="flex h-screen">

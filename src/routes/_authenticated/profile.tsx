@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getMyProfile, updateProfile } from "@/lib/app.functions";
+import { getMyProfile, updateProfile, setPlan } from "@/lib/app.functions";
 import { Loader2, Crown, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getMyProfile, updateProfile } from "@/lib/app.functions";
+import { getMyProfile, updateProfile, setPlan } from "@/lib/app.functions";
 import { Loader2, Crown, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
@@ -20,12 +20,28 @@ export const Route = createFileRoute("/_authenticated/profile")({
 function ProfilePage() {
   const getFn = useServerFn(getMyProfile);
   const updateFn = useServerFn(updateProfile);
+  const setPlanFn = useServerFn(setPlan);
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["profile"], queryFn: () => getFn() });
 
   const [name, setName] = useState("");
   const [avatar, setAvatar] = useState("");
   const [saving, setSaving] = useState(false);
+  const [switching, setSwitching] = useState(false);
+
+  async function changePlan(plan: "free" | "pro") {
+    setSwitching(true);
+    try {
+      await setPlanFn({ data: { plan } });
+      await qc.invalidateQueries({ queryKey: ["profile"] });
+      toast.success(plan === "pro" ? "You're on Pro now" : "Switched to Free");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to change plan");
+    } finally {
+      setSwitching(false);
+    }
+  }
+
 
   useEffect(() => {
     if (q.data?.profile) {
@@ -97,7 +113,17 @@ function ProfilePage() {
                     Renews {new Date(q.data.subscription.current_period_end).toLocaleDateString()}
                   </p>
                 )}
+                <Button
+                  onClick={() => changePlan(isPro ? "free" : "pro")}
+                  disabled={switching}
+                  variant={isPro ? "secondary" : "default"}
+                  className={`mt-4 w-full ${isPro ? "" : "gradient-primary text-primary-foreground"}`}
+                >
+                  {switching && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isPro ? "Switch to Free" : "Switch to Pro"}
+                </Button>
               </div>
+
 
               <div className="glass rounded-2xl p-6">
                 <div className="flex items-center gap-2 text-sm font-medium">

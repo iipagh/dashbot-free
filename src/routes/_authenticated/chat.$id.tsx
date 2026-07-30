@@ -86,9 +86,11 @@ function ChatPage() {
     setMessages(newMsgs);
     setInput("");
     setStreaming(true);
+    setPendingScrollId(null);
 
     const assistantId = crypto.randomUUID();
     setMessages((m) => [...m, { id: assistantId, role: "assistant", content: "" }]);
+    setPendingScrollId(assistantId);
 
     try {
       const { data: session } = await supabase.auth.getSession();

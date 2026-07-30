@@ -58,6 +58,12 @@ function ChatPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
 
+  const voice = useVoiceInput({
+    onTranscript: (text) => setInput((prev) => (prev ? `${prev.trim()} ${text}` : text).slice(0, 4000)),
+    onError: (message) => toast.error(message),
+  });
+
+
   useEffect(() => {
     if (msgsQ.data) {
       setMessages(msgsQ.data as Msg[]);

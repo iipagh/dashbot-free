@@ -57,7 +57,10 @@ function ChatPage() {
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (msgsQ.data) setMessages(msgsQ.data as Msg[]);
+    if (msgsQ.data) {
+      setMessages(msgsQ.data as Msg[]);
+      setPendingScrollId(null);
+    }
   }, [msgsQ.data]);
 
   useEffect(() => {
@@ -66,7 +69,11 @@ function ChatPage() {
     if (pendingScrollId) {
       const el = container.querySelector<HTMLElement>(`[data-msg-id="${pendingScrollId}"]`);
       if (el) {
-        const top = el.offsetTop - container.offsetTop - 16;
+        const top =
+          container.scrollTop +
+          el.getBoundingClientRect().top -
+          container.getBoundingClientRect().top -
+          16;
         container.scrollTo({ top, behavior: "smooth" });
         return;
       }

@@ -54,14 +54,25 @@ function ChatPage() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
 
   useEffect(() => {
     if (msgsQ.data) setMessages(msgsQ.data as Msg[]);
   }, [msgsQ.data]);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, streaming]);
+    const container = scrollRef.current;
+    if (!container) return;
+    if (pendingScrollId) {
+      const el = container.querySelector<HTMLElement>(`[data-msg-id="${pendingScrollId}"]`);
+      if (el) {
+        const top = el.offsetTop - container.offsetTop - 16;
+        container.scrollTo({ top, behavior: "smooth" });
+        return;
+      }
+    }
+    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+  }, [messages, streaming, pendingScrollId]);
 
   async function send(overrideMessages?: Msg[]) {
     const base = overrideMessages ?? messages;

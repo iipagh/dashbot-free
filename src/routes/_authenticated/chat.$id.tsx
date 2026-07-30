@@ -17,10 +17,12 @@ import {
   decrementFreeMessages,
 } from "@/lib/app.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { useVoiceInput } from "@/lib/use-voice-input";
 import {
-  Copy, RefreshCw, Send, Plus, Search, Trash2, Loader2, MessageSquare, Sparkles, Pencil, Check, X,
+  Copy, RefreshCw, Send, Plus, Search, Trash2, Loader2, MessageSquare, Sparkles, Pencil, Check, X, Mic, Square,
 } from "lucide-react";
 import { toast } from "sonner";
+
 
 type Msg = { id: string; role: "user" | "assistant"; content: string };
 
@@ -55,6 +57,12 @@ function ChatPage() {
   const [renameValue, setRenameValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
+
+  const voice = useVoiceInput({
+    onTranscript: (text) => setInput((prev) => (prev ? `${prev.trim()} ${text}` : text).slice(0, 4000)),
+    onError: (message) => toast.error(message),
+  });
+
 
   useEffect(() => {
     if (msgsQ.data) {
@@ -322,6 +330,22 @@ function ChatPage() {
                 />
                 <Button
                   size="icon"
+                  variant={voice.recording ? "destructive" : "ghost"}
+                  disabled={voice.transcribing || streaming}
+                  onClick={() => (voice.recording ? voice.stop() : voice.start())}
+                  aria-label={voice.recording ? "Stop recording" : "Start voice input"}
+                  title={voice.recording ? "Stop and transcribe" : "Voice input"}
+                >
+                  {voice.transcribing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : voice.recording ? (
+                    <Square className="h-4 w-4" />
+                  ) : (
+                    <Mic className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button
+                  size="icon"
                   className="gradient-primary text-primary-foreground shadow-glow"
                   disabled={streaming || !input.trim()}
                   onClick={() => send()}
@@ -330,9 +354,16 @@ function ChatPage() {
                 </Button>
               </div>
               <div className="mt-1.5 flex justify-between text-xs text-muted-foreground">
-                <span>Shift + Enter for new line</span>
+                <span>
+                  {voice.recording
+                    ? "Recording… click the stop button when you're done"
+                    : voice.transcribing
+                      ? "Transcribing…"
+                      : "Shift + Enter for new line"}
+                </span>
                 <span>{input.length} / 4000</span>
               </div>
+
             </div>
           </div>
         </div>

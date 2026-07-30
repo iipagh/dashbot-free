@@ -20,6 +20,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiVideoRouteImport } from './routes/api/video'
+import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
 import { Route as ApiImageRouteImport } from './routes/api/image'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedVideosRouteImport } from './routes/_authenticated/videos'
@@ -83,6 +84,11 @@ const ApiVideoRoute = ApiVideoRouteImport.update({
   path: '/api/video',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
+  id: '/api/transcribe',
+  path: '/api/transcribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiImageRoute = ApiImageRouteImport.update({
   id: '/api/image',
   path: '/api/image',
@@ -140,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/videos': typeof AuthenticatedVideosRoute
   '/api/chat': typeof ApiChatRoute
   '/api/image': typeof ApiImageRoute
+  '/api/transcribe': typeof ApiTranscribeRoute
   '/api/video': typeof ApiVideoRoute
   '/chat/$id': typeof AuthenticatedChatIdRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/videos': typeof AuthenticatedVideosRoute
   '/api/chat': typeof ApiChatRoute
   '/api/image': typeof ApiImageRoute
+  '/api/transcribe': typeof ApiTranscribeRoute
   '/api/video': typeof ApiVideoRoute
   '/chat/$id': typeof AuthenticatedChatIdRoute
   '/chat': typeof AuthenticatedChatIndexRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/_authenticated/videos': typeof AuthenticatedVideosRoute
   '/api/chat': typeof ApiChatRoute
   '/api/image': typeof ApiImageRoute
+  '/api/transcribe': typeof ApiTranscribeRoute
   '/api/video': typeof ApiVideoRoute
   '/_authenticated/chat/$id': typeof AuthenticatedChatIdRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/videos'
     | '/api/chat'
     | '/api/image'
+    | '/api/transcribe'
     | '/api/video'
     | '/chat/$id'
     | '/chat/'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/videos'
     | '/api/chat'
     | '/api/image'
+    | '/api/transcribe'
     | '/api/video'
     | '/chat/$id'
     | '/chat'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/_authenticated/videos'
     | '/api/chat'
     | '/api/image'
+    | '/api/transcribe'
     | '/api/video'
     | '/_authenticated/chat/$id'
     | '/_authenticated/chat/'
@@ -263,6 +275,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiImageRoute: typeof ApiImageRoute
+  ApiTranscribeRoute: typeof ApiTranscribeRoute
   ApiVideoRoute: typeof ApiVideoRoute
 }
 
@@ -343,6 +356,13 @@ declare module '@tanstack/react-router' {
       path: '/api/video'
       fullPath: '/api/video'
       preLoaderRoute: typeof ApiVideoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/transcribe': {
+      id: '/api/transcribe'
+      path: '/api/transcribe'
+      fullPath: '/api/transcribe'
+      preLoaderRoute: typeof ApiTranscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/image': {
@@ -438,6 +458,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
   ApiImageRoute: ApiImageRoute,
+  ApiTranscribeRoute: ApiTranscribeRoute,
   ApiVideoRoute: ApiVideoRoute,
 }
 export const routeTree = rootRouteImport

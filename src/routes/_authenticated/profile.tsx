@@ -20,12 +20,28 @@ export const Route = createFileRoute("/_authenticated/profile")({
 function ProfilePage() {
   const getFn = useServerFn(getMyProfile);
   const updateFn = useServerFn(updateProfile);
+  const setPlanFn = useServerFn(setPlan);
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["profile"], queryFn: () => getFn() });
 
   const [name, setName] = useState("");
   const [avatar, setAvatar] = useState("");
   const [saving, setSaving] = useState(false);
+  const [switching, setSwitching] = useState(false);
+
+  async function changePlan(plan: "free" | "pro") {
+    setSwitching(true);
+    try {
+      await setPlanFn({ data: { plan } });
+      await qc.invalidateQueries({ queryKey: ["profile"] });
+      toast.success(plan === "pro" ? "You're on Pro now" : "Switched to Free");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to change plan");
+    } finally {
+      setSwitching(false);
+    }
+  }
+
 
   useEffect(() => {
     if (q.data?.profile) {

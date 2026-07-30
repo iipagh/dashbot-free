@@ -199,3 +199,24 @@ export const syncSubscription = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// Manual plan switch from the app UI (Free <-> Pro).
+export const setPlan = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { plan: "free" | "pro" }) => d)
+  .handler(async ({ context, data }) => {
+    const isPro = data.plan === "pro";
+    const { error } = await context.supabase.from("subscriptions").upsert(
+      {
+        user_id: context.userId,
+        plan: data.plan,
+        status: isPro ? "active" : "inactive",
+        current_period_end: isPro
+          ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+          : null,
+      },
+      { onConflict: "user_id" },
+    );
+    if (error) throw new Error(error.message);
+    return { ok: true, plan: data.plan };
+  });

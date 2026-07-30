@@ -337,7 +337,7 @@ function ChatPage() {
 function MessageBubble({ msg, onRegenerate }: { msg: Msg; onRegenerate?: () => void }) {
   const isUser = msg.role === "user";
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"} animate-fade-up`}>
+    <div data-msg-id={msg.id} className={`flex ${isUser ? "justify-end" : "justify-start"} animate-fade-up`}>
       <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${isUser ? "gradient-primary text-primary-foreground shadow-glow" : "glass"}`}>
         {isUser ? <p className="whitespace-pre-wrap">{msg.content}</p> : <Markdown>{msg.content || "…"}</Markdown>}
         {!isUser && msg.content && (

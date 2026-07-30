@@ -113,7 +113,17 @@ function ProfilePage() {
                     Renews {new Date(q.data.subscription.current_period_end).toLocaleDateString()}
                   </p>
                 )}
+                <Button
+                  onClick={() => changePlan(isPro ? "free" : "pro")}
+                  disabled={switching}
+                  variant={isPro ? "secondary" : "default"}
+                  className={`mt-4 w-full ${isPro ? "" : "gradient-primary text-primary-foreground"}`}
+                >
+                  {switching && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isPro ? "Switch to Free" : "Switch to Pro"}
+                </Button>
               </div>
+
 
               <div className="glass rounded-2xl p-6">
                 <div className="flex items-center gap-2 text-sm font-medium">

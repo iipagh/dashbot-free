@@ -17,10 +17,12 @@ import {
   decrementFreeMessages,
 } from "@/lib/app.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { useVoiceInput } from "@/lib/use-voice-input";
 import {
-  Copy, RefreshCw, Send, Plus, Search, Trash2, Loader2, MessageSquare, Sparkles, Pencil, Check, X,
+  Copy, RefreshCw, Send, Plus, Search, Trash2, Loader2, MessageSquare, Sparkles, Pencil, Check, X, Mic, Square,
 } from "lucide-react";
 import { toast } from "sonner";
+
 
 type Msg = { id: string; role: "user" | "assistant"; content: string };
 

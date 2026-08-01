@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect } from "react";
-import { createConversation } from "@/lib/app.functions";
+import { useEffect, useRef } from "react";
+import { createConversation, listConversations } from "@/lib/app.functions";
 import { AppShell } from "@/components/app-shell";
 import { Loader2 } from "lucide-react";
 
@@ -12,11 +12,21 @@ export const Route = createFileRoute("/_authenticated/chat/")({
 function NewChatRedirect() {
   const navigate = useNavigate();
   const create = useServerFn(createConversation);
+  const list = useServerFn(listConversations);
+  const ran = useRef(false);
+
   useEffect(() => {
-    create({ data: {} }).then((row) => {
-      navigate({ to: "/chat/$id", params: { id: row.id }, replace: true });
-    });
-  }, [create, navigate]);
+    if (ran.current) return;
+    ran.current = true;
+    (async () => {
+      // Reuse the most recent conversation instead of always creating a new one.
+      const rows = await list({ data: {} }).catch(() => []);
+      const existing = Array.isArray(rows) ? rows[0] : undefined;
+      const target = existing ?? (await create({ data: {} }));
+      navigate({ to: "/chat/$id", params: { id: target.id }, replace: true });
+    })();
+  }, [create, list, navigate]);
+
   return (
     <AppShell>
       <div className="grid h-screen place-items-center">
@@ -25,3 +35,4 @@ function NewChatRedirect() {
     </AppShell>
   );
 }
+

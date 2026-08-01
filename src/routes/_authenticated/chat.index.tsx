@@ -20,7 +20,7 @@ function NewChatRedirect() {
     ran.current = true;
     (async () => {
       // Reuse the most recent conversation instead of always creating a new one.
-      const rows = await list({ data: {} }).catch(() => []);
+      const rows = await list().catch(() => []);
       const existing = Array.isArray(rows) ? rows[0] : undefined;
       const target = existing ?? (await create({ data: {} }));
       navigate({ to: "/chat/$id", params: { id: target.id }, replace: true });

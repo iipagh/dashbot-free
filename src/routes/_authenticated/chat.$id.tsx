@@ -130,14 +130,30 @@ function ChatPage() {
   async function send(overrideMessages?: Msg[]) {
     const base = overrideMessages ?? messages;
     const userText = overrideMessages ? "" : input.trim();
-    if (!overrideMessages && !userText) return;
+    const sending = overrideMessages ? [] : attachments;
+    if (!overrideMessages && !userText && sending.length === 0) return;
     if (streaming) return;
+
+    const inlineText = sending
+      .filter((a) => attachTexts[a.name] !== undefined)
+      .map((a) => `\n\n--- File: ${a.name} ---\n${attachTexts[a.name]}`)
+      .join("");
+    const modelAttachments = sending.filter((a) => attachTexts[a.name] === undefined);
 
     const newMsgs: Msg[] = overrideMessages
       ? base
-      : [...base, { id: crypto.randomUUID(), role: "user", content: userText }];
+      : [
+          ...base,
+          {
+            id: crypto.randomUUID(),
+            role: "user",
+            content: userText,
+            attachments: sending,
+          },
+        ];
     setMessages(newMsgs);
     setInput("");
+    setAttachments([]);
     setStreaming(true);
     setPendingScrollId(null);
 
@@ -148,15 +164,21 @@ function ChatPage() {
     try {
       const { data: session } = await supabase.auth.getSession();
       const token = session.session?.access_token;
+      const payload = newMsgs.map((m, i) => {
+        const isLastUser = !overrideMessages && i === newMsgs.length - 1;
+        return {
+          role: m.role,
+          content: isLastUser ? `${m.content}${inlineText}` : m.content,
+          ...(isLastUser && modelAttachments.length ? { attachments: modelAttachments } : {}),
+        };
+      });
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({
-          messages: newMsgs.map(({ role, content }) => ({ role, content })),
-        }),
+        body: JSON.stringify({ messages: payload }),
       });
       if (res.status === 402) {
         toast.error("The AI service needs attention. Please try again later.");

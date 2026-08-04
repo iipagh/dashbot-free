@@ -19,12 +19,24 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useVoiceInput } from "@/lib/use-voice-input";
 import {
-  Copy, RefreshCw, Send, Plus, Search, Trash2, Loader2, MessageSquare, Sparkles, Pencil, Check, X, Mic, Square,
+  Copy, RefreshCw, Send, Plus, Search, Trash2, Loader2, MessageSquare, Sparkles, Pencil, Check, X, Mic, Square, Paperclip, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 
 
-type Msg = { id: string; role: "user" | "assistant"; content: string };
+type Attachment = { name: string; mime: string; dataUrl: string };
+type Msg = { id: string; role: "user" | "assistant"; content: string; attachments?: Attachment[] };
+
+const MAX_FILE_BYTES = 8 * 1024 * 1024;
+
+function readAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(new Error("Failed to read file"));
+    r.readAsDataURL(file);
+  });
+}
 
 export const Route = createFileRoute("/_authenticated/chat/$id")({
   component: ChatPage,
@@ -56,7 +68,33 @@ function ChatPage() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachTexts, setAttachTexts] = useState<Record<string, string>>({});
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
+
+  async function onPickFiles(files: FileList | null) {
+    if (!files?.length) return;
+    for (const file of Array.from(files)) {
+      if (file.size > MAX_FILE_BYTES) {
+        toast.error(`${file.name} is larger than 8MB`);
+        continue;
+      }
+      try {
+        const isImage = file.type.startsWith("image/");
+        const isPdf = file.type === "application/pdf";
+        const dataUrl = await readAsDataUrl(file);
+        if (!isImage && !isPdf) {
+          const text = await file.text();
+          setAttachTexts((t) => ({ ...t, [file.name]: text.slice(0, 100000) }));
+        }
+        setAttachments((a) => [...a, { name: file.name, mime: file.type || "text/plain", dataUrl }]);
+      } catch {
+        toast.error(`Could not read ${file.name}`);
+      }
+    }
+    if (fileRef.current) fileRef.current.value = "";
+  }
 
   const voice = useVoiceInput({
     onTranscript: (text) => setInput((prev) => (prev ? `${prev.trim()} ${text}` : text).slice(0, 4000)),
@@ -92,14 +130,30 @@ function ChatPage() {
   async function send(overrideMessages?: Msg[]) {
     const base = overrideMessages ?? messages;
     const userText = overrideMessages ? "" : input.trim();
-    if (!overrideMessages && !userText) return;
+    const sending = overrideMessages ? [] : attachments;
+    if (!overrideMessages && !userText && sending.length === 0) return;
     if (streaming) return;
+
+    const inlineText = sending
+      .filter((a) => attachTexts[a.name] !== undefined)
+      .map((a) => `\n\n--- File: ${a.name} ---\n${attachTexts[a.name]}`)
+      .join("");
+    const modelAttachments = sending.filter((a) => attachTexts[a.name] === undefined);
 
     const newMsgs: Msg[] = overrideMessages
       ? base
-      : [...base, { id: crypto.randomUUID(), role: "user", content: userText }];
+      : [
+          ...base,
+          {
+            id: crypto.randomUUID(),
+            role: "user",
+            content: userText,
+            attachments: sending,
+          },
+        ];
     setMessages(newMsgs);
     setInput("");
+    setAttachments([]);
     setStreaming(true);
     setPendingScrollId(null);
 
@@ -110,15 +164,21 @@ function ChatPage() {
     try {
       const { data: session } = await supabase.auth.getSession();
       const token = session.session?.access_token;
+      const payload = newMsgs.map((m, i) => {
+        const isLastUser = !overrideMessages && i === newMsgs.length - 1;
+        return {
+          role: m.role,
+          content: isLastUser ? `${m.content}${inlineText}` : m.content,
+          ...(isLastUser && modelAttachments.length ? { attachments: modelAttachments } : {}),
+        };
+      });
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({
-          messages: newMsgs.map(({ role, content }) => ({ role, content })),
-        }),
+        body: JSON.stringify({ messages: payload }),
       });
       if (res.status === 402) {
         toast.error("The AI service needs attention. Please try again later.");
@@ -146,10 +206,13 @@ function ChatPage() {
       }
 
       // Persist both new user message (if not regen) and assistant reply.
+      const savedUserText = sending.length
+        ? `${userText}${userText ? "\n\n" : ""}📎 ${sending.map((a) => a.name).join(", ")}`
+        : userText;
       const toSave = overrideMessages
         ? [{ role: "assistant" as const, content: acc }]
         : [
-            { role: "user" as const, content: userText },
+            { role: "user" as const, content: savedUserText },
             { role: "assistant" as const, content: acc },
           ];
       await saveFn({ data: { conversationId, messages: toSave } });
@@ -157,7 +220,8 @@ function ChatPage() {
 
       // Auto-title first exchange.
       if (base.length === 0 && !overrideMessages) {
-        const title = userText.slice(0, 40) + (userText.length > 40 ? "…" : "");
+        const raw = userText || sending[0]?.name || "New Chat";
+        const title = raw.slice(0, 40) + (raw.length > 40 ? "…" : "");
         await renameFn({ data: { id: conversationId, title } });
         qc.invalidateQueries({ queryKey: ["conversations"] });
       }
@@ -313,7 +377,46 @@ function ChatPage() {
 
           <div className="border-t bg-background/50 p-4 backdrop-blur">
             <div className="mx-auto max-w-3xl">
+              {attachments.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-2">
+                  {attachments.map((a, i) => (
+                    <span key={`${a.name}-${i}`} className="glass flex items-center gap-2 rounded-lg px-2 py-1 text-xs">
+                      {a.mime.startsWith("image/") ? (
+                        <img src={a.dataUrl} alt={a.name} className="h-6 w-6 rounded object-cover" />
+                      ) : (
+                        <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                      )}
+                      <span className="max-w-[160px] truncate">{a.name}</span>
+                      <button
+                        onClick={() => setAttachments((prev) => prev.filter((_, j) => j !== i))}
+                        aria-label={`Remove ${a.name}`}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <input
+                ref={fileRef}
+                type="file"
+                multiple
+                className="hidden"
+                accept="image/*,application/pdf,text/*,.md,.csv,.json,.ts,.tsx,.js,.py"
+                onChange={(e) => onPickFiles(e.target.files)}
+              />
               <div className="glass flex items-end gap-2 rounded-2xl p-2">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  disabled={streaming}
+                  onClick={() => fileRef.current?.click()}
+                  aria-label="Attach file"
+                  title="Attach a file"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
                 <Textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -347,7 +450,7 @@ function ChatPage() {
                 <Button
                   size="icon"
                   className="gradient-primary text-primary-foreground shadow-glow"
-                  disabled={streaming || !input.trim()}
+                  disabled={streaming || (!input.trim() && attachments.length === 0)}
                   onClick={() => send()}
                 >
                   {streaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
@@ -377,6 +480,19 @@ function MessageBubble({ msg, onRegenerate }: { msg: Msg; onRegenerate?: () => v
   return (
     <div data-msg-id={msg.id} className={`flex ${isUser ? "justify-end" : "justify-start"} animate-fade-up`}>
       <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${isUser ? "gradient-primary text-primary-foreground shadow-glow" : "glass"}`}>
+        {!!msg.attachments?.length && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {msg.attachments.map((a, i) =>
+              a.mime.startsWith("image/") ? (
+                <img key={i} src={a.dataUrl} alt={a.name} className="h-24 w-24 rounded-lg object-cover" />
+              ) : (
+                <span key={i} className="flex items-center gap-1 rounded-lg bg-background/20 px-2 py-1 text-xs">
+                  <FileText className="h-3.5 w-3.5" /> {a.name}
+                </span>
+              ),
+            )}
+          </div>
+        )}
         {isUser ? <p className="whitespace-pre-wrap">{msg.content}</p> : <Markdown>{msg.content || "…"}</Markdown>}
         {!isUser && msg.content && (
           <div className="mt-2 flex gap-1 text-xs text-muted-foreground">

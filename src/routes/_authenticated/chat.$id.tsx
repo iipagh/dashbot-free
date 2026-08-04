@@ -206,10 +206,13 @@ function ChatPage() {
       }
 
       // Persist both new user message (if not regen) and assistant reply.
+      const savedUserText = sending.length
+        ? `${userText}${userText ? "\n\n" : ""}📎 ${sending.map((a) => a.name).join(", ")}`
+        : userText;
       const toSave = overrideMessages
         ? [{ role: "assistant" as const, content: acc }]
         : [
-            { role: "user" as const, content: userText },
+            { role: "user" as const, content: savedUserText },
             { role: "assistant" as const, content: acc },
           ];
       await saveFn({ data: { conversationId, messages: toSave } });

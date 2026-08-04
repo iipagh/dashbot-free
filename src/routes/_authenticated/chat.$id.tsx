@@ -19,12 +19,24 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useVoiceInput } from "@/lib/use-voice-input";
 import {
-  Copy, RefreshCw, Send, Plus, Search, Trash2, Loader2, MessageSquare, Sparkles, Pencil, Check, X, Mic, Square,
+  Copy, RefreshCw, Send, Plus, Search, Trash2, Loader2, MessageSquare, Sparkles, Pencil, Check, X, Mic, Square, Paperclip, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 
 
-type Msg = { id: string; role: "user" | "assistant"; content: string };
+type Attachment = { name: string; mime: string; dataUrl: string };
+type Msg = { id: string; role: "user" | "assistant"; content: string; attachments?: Attachment[] };
+
+const MAX_FILE_BYTES = 8 * 1024 * 1024;
+
+function readAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(new Error("Failed to read file"));
+    r.readAsDataURL(file);
+  });
+}
 
 export const Route = createFileRoute("/_authenticated/chat/$id")({
   component: ChatPage,

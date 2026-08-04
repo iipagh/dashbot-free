@@ -377,7 +377,46 @@ function ChatPage() {
 
           <div className="border-t bg-background/50 p-4 backdrop-blur">
             <div className="mx-auto max-w-3xl">
+              {attachments.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-2">
+                  {attachments.map((a, i) => (
+                    <span key={`${a.name}-${i}`} className="glass flex items-center gap-2 rounded-lg px-2 py-1 text-xs">
+                      {a.mime.startsWith("image/") ? (
+                        <img src={a.dataUrl} alt={a.name} className="h-6 w-6 rounded object-cover" />
+                      ) : (
+                        <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                      )}
+                      <span className="max-w-[160px] truncate">{a.name}</span>
+                      <button
+                        onClick={() => setAttachments((prev) => prev.filter((_, j) => j !== i))}
+                        aria-label={`Remove ${a.name}`}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <input
+                ref={fileRef}
+                type="file"
+                multiple
+                className="hidden"
+                accept="image/*,application/pdf,text/*,.md,.csv,.json,.ts,.tsx,.js,.py"
+                onChange={(e) => onPickFiles(e.target.files)}
+              />
               <div className="glass flex items-end gap-2 rounded-2xl p-2">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  disabled={streaming}
+                  onClick={() => fileRef.current?.click()}
+                  aria-label="Attach file"
+                  title="Attach a file"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
                 <Textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}

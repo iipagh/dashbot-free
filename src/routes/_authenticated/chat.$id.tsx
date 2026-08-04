@@ -220,7 +220,8 @@ function ChatPage() {
 
       // Auto-title first exchange.
       if (base.length === 0 && !overrideMessages) {
-        const title = userText.slice(0, 40) + (userText.length > 40 ? "…" : "");
+        const raw = userText || sending[0]?.name || "New Chat";
+        const title = raw.slice(0, 40) + (raw.length > 40 ? "…" : "");
         await renameFn({ data: { id: conversationId, title } });
         qc.invalidateQueries({ queryKey: ["conversations"] });
       }

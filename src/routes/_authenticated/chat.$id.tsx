@@ -68,7 +68,33 @@ function ChatPage() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachTexts, setAttachTexts] = useState<Record<string, string>>({});
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
+
+  async function onPickFiles(files: FileList | null) {
+    if (!files?.length) return;
+    for (const file of Array.from(files)) {
+      if (file.size > MAX_FILE_BYTES) {
+        toast.error(`${file.name} is larger than 8MB`);
+        continue;
+      }
+      try {
+        const isImage = file.type.startsWith("image/");
+        const isPdf = file.type === "application/pdf";
+        const dataUrl = await readAsDataUrl(file);
+        if (!isImage && !isPdf) {
+          const text = await file.text();
+          setAttachTexts((t) => ({ ...t, [file.name]: text.slice(0, 100000) }));
+        }
+        setAttachments((a) => [...a, { name: file.name, mime: file.type || "text/plain", dataUrl }]);
+      } catch {
+        toast.error(`Could not read ${file.name}`);
+      }
+    }
+    if (fileRef.current) fileRef.current.value = "";
+  }
 
   const voice = useVoiceInput({
     onTranscript: (text) => setInput((prev) => (prev ? `${prev.trim()} ${text}` : text).slice(0, 4000)),

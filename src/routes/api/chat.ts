@@ -50,7 +50,7 @@ export const Route = createFileRoute("/api/chat")({
           body: JSON.stringify({
             model: "google/gemini-3.6-flash",
             stream: true,
-            messages: [system, ...messages],
+            messages: [system, ...messages].map(toGatewayMessage),
           }),
         });
 

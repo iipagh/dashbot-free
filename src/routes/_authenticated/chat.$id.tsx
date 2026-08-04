@@ -480,6 +480,19 @@ function MessageBubble({ msg, onRegenerate }: { msg: Msg; onRegenerate?: () => v
   return (
     <div data-msg-id={msg.id} className={`flex ${isUser ? "justify-end" : "justify-start"} animate-fade-up`}>
       <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${isUser ? "gradient-primary text-primary-foreground shadow-glow" : "glass"}`}>
+        {!!msg.attachments?.length && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {msg.attachments.map((a, i) =>
+              a.mime.startsWith("image/") ? (
+                <img key={i} src={a.dataUrl} alt={a.name} className="h-24 w-24 rounded-lg object-cover" />
+              ) : (
+                <span key={i} className="flex items-center gap-1 rounded-lg bg-background/20 px-2 py-1 text-xs">
+                  <FileText className="h-3.5 w-3.5" /> {a.name}
+                </span>
+              ),
+            )}
+          </div>
+        )}
         {isUser ? <p className="whitespace-pre-wrap">{msg.content}</p> : <Markdown>{msg.content || "…"}</Markdown>}
         {!isUser && msg.content && (
           <div className="mt-2 flex gap-1 text-xs text-muted-foreground">

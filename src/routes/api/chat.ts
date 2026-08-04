@@ -1,7 +1,29 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireAuthFromRequest } from "@/lib/api-auth.server";
 
-type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
+type Attachment = { name: string; mime: string; dataUrl: string };
+type ChatMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
+  attachments?: Attachment[];
+};
+
+function toGatewayMessage(m: ChatMessage) {
+  if (!m.attachments?.length) return { role: m.role, content: m.content };
+  const parts: unknown[] = [];
+  if (m.content) parts.push({ type: "text", text: m.content });
+  for (const a of m.attachments) {
+    if (a.mime.startsWith("image/")) {
+      parts.push({ type: "image_url", image_url: { url: a.dataUrl } });
+    } else {
+      parts.push({
+        type: "file",
+        file: { filename: a.name, file_data: a.dataUrl },
+      });
+    }
+  }
+  return { role: m.role, content: parts };
+}
 
 export const Route = createFileRoute("/api/chat")({
   server: {

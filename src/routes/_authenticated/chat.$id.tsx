@@ -450,7 +450,7 @@ function ChatPage() {
                 <Button
                   size="icon"
                   className="gradient-primary text-primary-foreground shadow-glow"
-                  disabled={streaming || !input.trim()}
+                  disabled={streaming || (!input.trim() && attachments.length === 0)}
                   onClick={() => send()}
                 >
                   {streaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

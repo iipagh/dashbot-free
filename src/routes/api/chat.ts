@@ -53,7 +53,7 @@ export const Route = createFileRoute("/api/chat")({
         const useOpenAI = Boolean(openaiKey);
         const upstream = await fetch(
           useOpenAI
-            ? "https://api.openai.com/v1/chat/completions"
+            ? `${baseUrl}/chat/completions`
             : "https://ai.gateway.lovable.dev/v1/chat/completions",
           {
             method: "POST",
@@ -61,7 +61,8 @@ export const Route = createFileRoute("/api/chat")({
               ? { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" }
               : { "Lovable-API-Key": lovableKey!, "Content-Type": "application/json" },
             body: JSON.stringify({
-              model: useOpenAI ? "gpt-4o-mini" : "google/gemini-3.6-flash",
+              model: useOpenAI ? customModel : "google/gemini-3.6-flash",
+
               stream: true,
               messages: [system, ...messages].map(toGatewayMessage),
             }),

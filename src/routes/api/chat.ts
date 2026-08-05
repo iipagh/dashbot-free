@@ -32,8 +32,10 @@ export const Route = createFileRoute("/api/chat")({
         const authResult = await requireAuthFromRequest(request);
         if (authResult instanceof Response) return authResult;
 
-        const key = process.env.LOVABLE_API_KEY;
-        if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
+        const openaiKey = process.env.OPENAI_API_KEY;
+        const lovableKey = process.env.LOVABLE_API_KEY;
+        if (!openaiKey && !lovableKey)
+          return new Response("Missing OPENAI_API_KEY", { status: 500 });
 
         const { messages } = (await request.json()) as { messages: ChatMessage[] };
         if (!Array.isArray(messages)) return new Response("messages required", { status: 400 });
@@ -44,15 +46,25 @@ export const Route = createFileRoute("/api/chat")({
             "You are DashBot, a helpful, friendly, and creative AI assistant. Respond in clean markdown. Use fenced code blocks with language tags, tables when useful, and be concise but thorough.",
         };
 
-        const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: { "Lovable-API-Key": key, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "google/gemini-3.6-flash",
-            stream: true,
-            messages: [system, ...messages].map(toGatewayMessage),
-          }),
-        });
+        // Prefer the user's own OpenAI key (no Lovable credits used).
+        const useOpenAI = Boolean(openaiKey);
+        const upstream = await fetch(
+          useOpenAI
+            ? "https://api.openai.com/v1/chat/completions"
+            : "https://ai.gateway.lovable.dev/v1/chat/completions",
+          {
+            method: "POST",
+            headers: useOpenAI
+              ? { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" }
+              : { "Lovable-API-Key": lovableKey!, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: useOpenAI ? "gpt-4o-mini" : "google/gemini-3.6-flash",
+              stream: true,
+              messages: [system, ...messages].map(toGatewayMessage),
+            }),
+          },
+        );
+
 
         if (!upstream.ok || !upstream.body) {
           const text = await upstream.text();

@@ -49,30 +49,38 @@ export const Route = createFileRoute("/api/chat")({
             "You are DashBot, a helpful, friendly, and creative AI assistant. Respond in clean markdown. Use fenced code blocks with language tags, tables when useful, and be concise but thorough.",
         };
 
-        // Prefer the user's own OpenAI key (no Lovable credits used).
-        const useOpenAI = Boolean(openaiKey);
-        const upstream = await fetch(
-          useOpenAI
-            ? `${baseUrl}/chat/completions`
-            : "https://ai.gateway.lovable.dev/v1/chat/completions",
-          {
-            method: "POST",
-            headers: useOpenAI
-              ? { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" }
-              : { "Lovable-API-Key": lovableKey!, "Content-Type": "application/json" },
-            body: JSON.stringify({
-              model: useOpenAI ? customModel : "google/gemini-3.6-flash",
+        const body = (useLovable: boolean) =>
+          JSON.stringify({
+            model: useLovable ? "google/gemini-3.6-flash" : customModel,
+            stream: true,
+            messages: [system, ...messages].map(toGatewayMessage),
+          });
 
-              stream: true,
-              messages: [system, ...messages].map(toGatewayMessage),
-            }),
-          },
-        );
+        const callUpstream = (useLovable: boolean) =>
+          fetch(
+            useLovable
+              ? "https://ai.gateway.lovable.dev/v1/chat/completions"
+              : `${baseUrl}/chat/completions`,
+            {
+              method: "POST",
+              headers: useLovable
+                ? { "Lovable-API-Key": lovableKey!, "Content-Type": "application/json" }
+                : { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
+              body: body(useLovable),
+            },
+          );
 
+        // Prefer the user's own key; fall back to Lovable AI if it is
+        // out of credits / unauthorized / rate limited.
+        let upstream = await callUpstream(!openaiKey);
+        if (openaiKey && lovableKey && [401, 402, 403, 429].includes(upstream.status)) {
+          upstream = await callUpstream(true);
+        }
 
         if (!upstream.ok || !upstream.body) {
           const text = await upstream.text();
           return new Response(text, { status: upstream.status });
+
         }
 
         const stream = new ReadableStream({

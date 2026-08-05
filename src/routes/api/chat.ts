@@ -34,8 +34,11 @@ export const Route = createFileRoute("/api/chat")({
 
         const openaiKey = process.env.OPENAI_API_KEY;
         const lovableKey = process.env.LOVABLE_API_KEY;
+        const baseUrl = (process.env.AI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "");
+        const customModel = process.env.AI_MODEL || "gpt-4o-mini";
         if (!openaiKey && !lovableKey)
           return new Response("Missing OPENAI_API_KEY", { status: 500 });
+
 
         const { messages } = (await request.json()) as { messages: ChatMessage[] };
         if (!Array.isArray(messages)) return new Response("messages required", { status: 400 });

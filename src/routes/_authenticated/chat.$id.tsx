@@ -22,6 +22,8 @@ import {
   Copy, RefreshCw, Send, Plus, Search, Trash2, Loader2, MessageSquare, Sparkles, Pencil, Check, X, Mic, Square, Paperclip, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n";
+import { getLanguage } from "@/lib/languages";
 
 
 type Attachment = { name: string; mime: string; dataUrl: string };
@@ -46,6 +48,7 @@ function ChatPage() {
   const { id: conversationId } = Route.useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { lang } = useI18n();
 
   const listFn = useServerFn(listConversations);
   const getMsgs = useServerFn(getMessages);
@@ -178,7 +181,7 @@ function ChatPage() {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ messages: payload }),
+        body: JSON.stringify({ messages: payload, language: getLanguage(lang).name }),
       });
       if (res.status === 402) {
         toast.error("The AI service needs attention. Please try again later.");

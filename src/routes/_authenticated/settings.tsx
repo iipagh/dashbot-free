@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { LogOut, Trash2, Download, Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n";
+import { LanguageSelect } from "@/components/language-select";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — DashBot AI" }] }),
@@ -16,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 function SettingsPage() {
   const { signOut, user } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [dark, setDark] = useState(() => typeof document !== "undefined" && document.documentElement.classList.contains("dark"));
 
@@ -58,14 +61,24 @@ function SettingsPage() {
   return (
     <AppShell>
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-        <h1 className="text-3xl font-bold">Settings</h1>
+        <h1 className="text-3xl font-bold">{t("settings.title")}</h1>
 
         <section className="mt-6 space-y-4">
           <div className="glass rounded-2xl p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <Label className="text-base">{t("settings.language")}</Label>
+                <p className="text-sm text-muted-foreground">{t("settings.languageDesc")}</p>
+              </div>
+              <LanguageSelect />
+            </div>
+          </div>
+
+          <div className="glass rounded-2xl p-5">
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-base">Appearance</Label>
-                <p className="text-sm text-muted-foreground">Choose light or dark mode.</p>
+                <Label className="text-base">{t("settings.appearance")}</Label>
+                <p className="text-sm text-muted-foreground">{t("settings.appearanceDesc")}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Sun className="h-4 w-4 text-muted-foreground" />
@@ -78,11 +91,11 @@ function SettingsPage() {
           <div className="glass rounded-2xl p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <Label className="text-base">Export chat history</Label>
-                <p className="text-sm text-muted-foreground">Download all your messages as JSON.</p>
+                <Label className="text-base">{t("settings.export")}</Label>
+                <p className="text-sm text-muted-foreground">{t("settings.exportDesc")}</p>
               </div>
               <Button variant="outline" onClick={exportChats}>
-                <Download className="mr-2 h-4 w-4" /> Export
+                <Download className="mr-2 h-4 w-4" /> {t("settings.exportBtn")}
               </Button>
             </div>
           </div>
@@ -90,11 +103,11 @@ function SettingsPage() {
           <div className="glass rounded-2xl p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <Label className="text-base">Sign out</Label>
-                <p className="text-sm text-muted-foreground">Sign out of DashBot on this device.</p>
+                <Label className="text-base">{t("nav.signOut")}</Label>
+                <p className="text-sm text-muted-foreground">{t("settings.signOutDesc")}</p>
               </div>
               <Button variant="outline" onClick={handleSignOut}>
-                <LogOut className="mr-2 h-4 w-4" /> Sign out
+                <LogOut className="mr-2 h-4 w-4" /> {t("nav.signOut")}
               </Button>
             </div>
           </div>
@@ -102,11 +115,11 @@ function SettingsPage() {
           <div className="glass rounded-2xl p-5 border-destructive/30">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <Label className="text-base text-destructive">Delete account</Label>
-                <p className="text-sm text-muted-foreground">Permanently delete your data. This can't be undone.</p>
+                <Label className="text-base text-destructive">{t("settings.delete")}</Label>
+                <p className="text-sm text-muted-foreground">{t("settings.deleteDesc")}</p>
               </div>
               <Button variant="destructive" onClick={deleteAccount}>
-                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                <Trash2 className="mr-2 h-4 w-4" /> {t("settings.deleteBtn")}
               </Button>
             </div>
           </div>

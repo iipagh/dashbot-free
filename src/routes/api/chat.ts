@@ -40,13 +40,14 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Missing OPENAI_API_KEY", { status: 500 });
 
 
-        const { messages } = (await request.json()) as { messages: ChatMessage[] };
+        const { messages, language } = (await request.json()) as { messages: ChatMessage[]; language?: string };
+        const appLanguage = typeof language === "string" && language.length < 60 ? language : "English";
         if (!Array.isArray(messages)) return new Response("messages required", { status: 400 });
 
         const system: ChatMessage = {
           role: "system",
           content:
-            "You are DashBot, a helpful, friendly, and creative AI assistant. Respond in clean markdown. Use fenced code blocks with language tags, tables when useful, and be concise but thorough.",
+            "You are DashBot, a helpful, friendly, and creative AI assistant. Respond in clean markdown. Use fenced code blocks with language tags, tables when useful, and be concise but thorough.\n\nLanguage rules: Always reply in the language of the user's most recent message. If the user switches to another language, switch with them and keep using that new language until they change again. If the latest message has no clear language (e.g. only an attachment, code, or emoji), reply in the user's chosen app language: " + appLanguage + ".",
         };
 
         const body = (useLovable: boolean) =>

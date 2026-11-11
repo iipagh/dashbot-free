@@ -3,17 +3,20 @@ import { Sparkles, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
+import { useI18n, type TranslationKey } from "@/lib/i18n";
+import { LanguageSelect } from "@/components/language-select";
 
 const nav = [
-  { to: "/", label: "Home" },
-  { to: "/features", label: "Features" },
-  { to: "/pricing", label: "Pricing" },
-  { to: "/about", label: "About" },
+  { to: "/", label: "nav.home" as TranslationKey },
+  { to: "/features", label: "nav.features" as TranslationKey },
+  { to: "/pricing", label: "nav.pricing" as TranslationKey },
+  { to: "/about", label: "nav.about" as TranslationKey },
 ] as const;
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
+  const { t } = useI18n();
 
   return (
     <header className="sticky top-4 z-40 mx-auto w-[min(1200px,calc(100%-2rem))]">
@@ -33,28 +36,29 @@ export function Navbar() {
               className="rounded-full px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
               activeProps={{ className: "text-foreground bg-accent/60" }}
             >
-              {n.label}
+              {t(n.label)}
             </Link>
           ))}
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
+          <LanguageSelect compact />
           {user ? (
             <>
               <Button asChild variant="ghost" size="sm">
-                <Link to="/chat">Open App</Link>
+                <Link to="/chat">{t("nav.openApp")}</Link>
               </Button>
               <Button asChild size="sm" className="gradient-primary text-primary-foreground shadow-glow">
-                <Link to="/profile">Profile</Link>
+                <Link to="/profile">{t("nav.profile")}</Link>
               </Button>
             </>
           ) : (
             <>
               <Button asChild variant="ghost" size="sm">
-                <Link to="/auth">Login</Link>
+                <Link to="/auth">{t("nav.login")}</Link>
               </Button>
               <Button asChild size="sm" className="gradient-primary text-primary-foreground shadow-glow">
-                <Link to="/auth" search={{ mode: "signup" }}>Get Started</Link>
+                <Link to="/auth" search={{ mode: "signup" }}>{t("nav.getStarted")}</Link>
               </Button>
             </>
           )}
@@ -79,21 +83,22 @@ export function Navbar() {
                 onClick={() => setOpen(false)}
                 className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
               >
-                {n.label}
+                {t(n.label)}
               </Link>
             ))}
+            <div className="mt-2"><LanguageSelect /></div>
             <div className="mt-2 flex gap-2">
               {user ? (
                 <Button asChild className="flex-1 gradient-primary text-primary-foreground">
-                  <Link to="/chat" onClick={() => setOpen(false)}>Open App</Link>
+                  <Link to="/chat" onClick={() => setOpen(false)}>{t("nav.openApp")}</Link>
                 </Button>
               ) : (
                 <>
                   <Button asChild variant="outline" className="flex-1">
-                    <Link to="/auth" onClick={() => setOpen(false)}>Login</Link>
+                    <Link to="/auth" onClick={() => setOpen(false)}>{t("nav.login")}</Link>
                   </Button>
                   <Button asChild className="flex-1 gradient-primary text-primary-foreground">
-                    <Link to="/auth" onClick={() => setOpen(false)}>Sign Up</Link>
+                    <Link to="/auth" onClick={() => setOpen(false)}>{t("nav.signUp")}</Link>
                   </Button>
                 </>
               )}

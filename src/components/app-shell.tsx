@@ -3,17 +3,20 @@ import { MessageSquare, Image as ImageIcon, Film, User, Settings, LogOut, Sparkl
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import type { ReactNode } from "react";
+import { useI18n, type TranslationKey } from "@/lib/i18n";
+import { LanguageSelect } from "@/components/language-select";
 
 const nav = [
-  { to: "/chat", label: "Chat", icon: MessageSquare },
-  { to: "/images", label: "Images", icon: ImageIcon },
-  { to: "/videos", label: "Videos", icon: Film },
-  { to: "/profile", label: "Profile", icon: User },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/chat", label: "nav.chat" as TranslationKey, icon: MessageSquare },
+  { to: "/images", label: "nav.images" as TranslationKey, icon: ImageIcon },
+  { to: "/videos", label: "nav.videos" as TranslationKey, icon: Film },
+  { to: "/profile", label: "nav.profile" as TranslationKey, icon: User },
+  { to: "/settings", label: "nav.settings" as TranslationKey, icon: Settings },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { signOut } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -24,7 +27,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="hidden w-64 flex-col border-r bg-sidebar p-4 md:flex">
+      <aside className="hidden w-64 flex-col border-e bg-sidebar p-4 md:flex">
         <Link to="/" className="mb-6 flex items-center gap-2 font-semibold">
           <span className="grid h-8 w-8 place-items-center rounded-xl gradient-primary text-primary-foreground shadow-glow">
             <Sparkles className="h-4 w-4" />
@@ -42,17 +45,18 @@ export function AppShell({ children }: { children: ReactNode }) {
                   active ? "gradient-primary text-primary-foreground shadow-glow" : "hover:bg-sidebar-accent"
                 }`}
               >
-                <n.icon className="h-4 w-4" /> {n.label}
+                <n.icon className="h-4 w-4" /> {t(n.label)}
               </Link>
             );
           })}
         </nav>
         <div className="mt-4 space-y-2">
+          <LanguageSelect />
           <Button variant="ghost" asChild className="w-full justify-start">
-            <Link to="/"><Home className="mr-2 h-4 w-4" /> Home</Link>
+            <Link to="/"><Home className="me-2 h-4 w-4" /> {t("nav.home")}</Link>
           </Button>
           <Button variant="ghost" className="w-full justify-start text-destructive" onClick={handleSignOut}>
-            <LogOut className="mr-2 h-4 w-4" /> Sign out
+            <LogOut className="me-2 h-4 w-4" /> {t("nav.signOut")}
           </Button>
         </div>
       </aside>
@@ -65,7 +69,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           </span>
           DashBot
         </Link>
-        <div className="flex gap-1">
+        <div className="flex items-center gap-1">
+          <LanguageSelect compact />
           {nav.slice(0, 3).map((n) => (
             <Link key={n.to} to={n.to} className="rounded-lg p-2 hover:bg-accent">
               <n.icon className="h-4 w-4" />
